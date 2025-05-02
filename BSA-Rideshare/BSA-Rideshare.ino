@@ -3,6 +3,7 @@
 #include <Wire.h>                 // library for I2C
 #include "SparkFun_MMA8452Q.h"    // Accelerometer Library
 #include <Adafruit_BMP085.h>      // Library for BMP180 preassure and temperature sensor
+#include <Adafruit_HDC302x.h>     // Temp & Humidity Sensor Libary
 
 int PoleDelay = 1000;               // delay between sensor readings (mili sec) min =1
 const char* filename = "Test.csv";
@@ -12,6 +13,7 @@ const int chipSelect = 4;
 
 MMA8452Q accel; 
 Adafruit_BMP085 bmp;
+Adafruit_HDC302x hdc = Adafruit_HDC302x();
 
 void setup() {
   Serial.begin(9600);
@@ -36,6 +38,12 @@ void setup() {
 	while (1) {}
   }
 
+  // Humidity and Temp Sensor
+  if (! hdc.begin(0x44, &Wire)) {
+  Serial.println("Could not find sensor?");
+  while (1);
+  }
+
   // Create a new file
   File dataFile = SD.open(filename, FILE_WRITE);
 
@@ -57,8 +65,12 @@ void loop() {
   float accY = accel.getCalculatedY();
   float accZ = accel.getCalculatedZ();
 
-  float temp = bmp.readTemperature();
+  float tempA = bmp.readTemperature();
   float pres = bmp.readPressure();
+
+  double tempB = 0.0;
+  double RH = 0.0;
+  hdc.readTemperatureHumidityOnDemand(tempB, RH, TRIGGERMODE_LP0);
 
    // Open the file for appending
   File dataFile = SD.open(filename, FILE_WRITE);
@@ -71,7 +83,7 @@ void loop() {
     dataFile.print(",");
     dataFile.print(accZ, 3);
     dataFile.print(",");
-    dataFile.print(temp);
+    dataFile.print(tempA);
     dataFile.print(",");
     dataFile.print(pres);
     dataFile.println(",");
@@ -79,8 +91,32 @@ void loop() {
 
     dataFile.close();
     Serial.println("Data logged to SD card.");
+
+  // Testing Print Outs
+  Serial.println("Acceleration");
+  Serial.print("AccX: ");
+  Serial.println(accX, 3);
+  Serial.print("AccY: ");
+  Serial.println(accY, 3);
+  Serial.print("AccZ: ");
+  Serial.println(accZ, 3);
+  Serial.println("Preassure & Temp");
+  Serial.print("Preassure: ");
+  Serial.println(pres);
+  Serial.print("Temperature A: ");
+  Serial.println(tempA);
+  Serial.println("Humidity and Temp");
+  Serial.print("Temperature B: ");
+  Serial.println(tempB);
+  Serial.print("Humidity: ");
+  Serial.println(RH);
+
+
+  Serial.println("");
+
   } else {
     Serial.println("Error opening data file for appending.");
   }
 
 }
+
