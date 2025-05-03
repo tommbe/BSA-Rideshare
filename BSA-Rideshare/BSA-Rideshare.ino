@@ -6,7 +6,7 @@
 #include <Adafruit_HDC302x.h>     // Temp & Humidity Sensor Libary
 
 int PoleDelay = 1000;               // delay between sensor readings (mili sec) min =1
-const char* filename = "Test.csv";
+const char* filename = ".csv";
 
 
 const int chipSelect = 4;
@@ -20,7 +20,9 @@ void setup() {
   Serial.println("MMA8452Q Basic Reading Code!");
   Wire.begin();
 
-// Initialise SD card
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  // Initialise SD card
   if (!SD.begin(chipSelect)) {
     Serial.println("Card failed, or not present");
     while (1);                      // Stops code if 
@@ -48,7 +50,7 @@ void setup() {
   File dataFile = SD.open(filename, FILE_WRITE);
 
   if (dataFile) {
-    dataFile.println("AccX,AccY,AccZ,Temp,P");
+    dataFile.println("AccX,AccY,AccZ,TempBMP180,Presure,TempHDC302x,Humidity");
     dataFile.close();
     Serial.print("Created file: ");
     Serial.println(filename);
@@ -60,6 +62,8 @@ void setup() {
 
 void loop() {
   delay(PoleDelay);
+
+  digitalWrite(LED_BUILTIN, LOW);
 
   float accX = accel.getCalculatedX();
   float accY = accel.getCalculatedY();
@@ -86,11 +90,17 @@ void loop() {
     dataFile.print(tempA);
     dataFile.print(",");
     dataFile.print(pres);
+    dataFile.print(",");
+    dataFile.print(tempB);
+    dataFile.print(",");
+    dataFile.print(RH);
     dataFile.println(",");
     dataFile.flush();
 
     dataFile.close();
     Serial.println("Data logged to SD card.");
+  
+  digitalWrite(LED_BUILTIN, HIGH);
 
   // Testing Print Outs
   Serial.println("Acceleration");
@@ -119,4 +129,3 @@ void loop() {
   }
 
 }
-
